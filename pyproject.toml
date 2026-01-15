@@ -7,8 +7,12 @@ authors = [{ name = "lostyear", email = "lostyear540@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
     "langchain>=1.2.3",
+    "langchain-community>=0.4.1",
     "langchain-deepseek>=1.0.1",
+    "langchain-text-splitters>=1.1.0",
+    "markdown>=3.10",
     "python-dotenv>=1.2.1",
+    "unstructured>=0.18.27",
 ]
 
 [dependency-groups]
