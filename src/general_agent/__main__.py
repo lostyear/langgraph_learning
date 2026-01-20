@@ -238,12 +238,43 @@ async def run_with_rag_async():
         msg.pretty_print()
 
 
+async def with_max_loop():
+    from typing import cast
+    from langchain.agents import create_agent
+    from langchain.messages import HumanMessage
+    from .dataclass import AgentInvokeInput
+    from .tools import math_tools
+
+    agent = create_agent(
+        model="deepseek-chat",
+        debug=True,
+        tools=math_tools(),
+        system_prompt="You are a helpful assistant by lostyear.",
+    )
+
+    # invoke 里面要包装一层 cast(None, xxx) 因为不用case这里类型检查过不去
+    result = agent.invoke(
+        input=cast(
+            None,
+            AgentInvokeInput(
+                messages=[
+                    HumanMessage(
+                        "帮我计算一下这个表达式的值： 1+2*3*4+6/3-8/4 注意，你需要使用提供的工具计算"
+                    )
+                ]
+            ),
+        ),
+        config={"recursion_limit": 3},
+    )
+    print(result)
+
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
     from asyncio import run
 
     load_dotenv()
-    chat_deepseek_reasoner()
+    # chat_deepseek_reasoner()
     # create_agent()
     # structured_output()
     # structured_list_output()
@@ -251,3 +282,4 @@ if __name__ == "__main__":
     # with_chat_history()
     # with_rag()
     # run(run_with_rag_async())
+    run(with_max_loop())
