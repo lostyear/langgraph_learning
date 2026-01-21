@@ -10,14 +10,12 @@ class BashAgent(BaseAgent):
         model: str,
         system_prompt: str,
         thread_id: str = "bash_agent",
-        debug: bool = False,
     ):
         from src.learn_cc.tools import run_bash
 
         super().__init__(
             model=model,
             system_prompt=system_prompt,
-            debug=debug,
             thread_id="bash_agent",
             tools=[run_bash],
         )

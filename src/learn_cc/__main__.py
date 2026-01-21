@@ -5,6 +5,9 @@ from click import Context
 
 from .agents import AsyncAgent
 
+# 导入日志配置模块，确保logging.basicConfig被执行
+from src import log as _
+
 
 class CliOptions(NamedTuple):
     debug: bool
@@ -35,6 +38,12 @@ def cli(
     system: str,
     # prompt: str,
 ):
+
+    if debug:
+        from src.log import setLevel, logging
+
+        setLevel(logging.DEBUG)
+
     global cliOptions
     echo("start command...")
     echo(f"system prompt is {system}")
@@ -52,10 +61,8 @@ def v0_bash(ctx: Context):
     echo(ctx)
     echo("agent with bash")
 
-    agent = BashAgent(
-        cliOptions.model, cliOptions.system_prompt, debug=cliOptions.debug
-    )
-    run_agent_loop(agent)
+    agent = BashAgent(cliOptions.model, cliOptions.system_prompt)
+    run_agent_loop(agent.ainvoke)
 
 
 @cli.command("basic")
@@ -63,13 +70,11 @@ def v1_basic_agent():
     from .agents import BasicAgent
 
     echo("basic agent with bash&fileOperation")
-    agent = BasicAgent(
-        cliOptions.model, cliOptions.system_prompt, debug=cliOptions.debug
-    )
-    run_agent_loop(agent)
+    agent = BasicAgent(cliOptions.model, cliOptions.system_prompt)
+    run_agent_loop(agent.astream)
 
 
-def run_agent_loop(agent: AsyncAgent):
+def run_agent_loop(func):
     from asyncio import run
 
     while True:
@@ -82,10 +87,13 @@ def run_agent_loop(agent: AsyncAgent):
         if user_input in ("exit", "quit", "q"):
             break
         try:
-            r = run(agent.ainvoke(user_input))
+            r = run(func(user_input))
             # print(r)
         except Exception as e:
             print(f"run agent invoke got error: {e}")
+            import traceback
+
+            print(traceback.format_exc())
     echo("user stop, exiting...")
 
 
