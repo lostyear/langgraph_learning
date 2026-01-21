@@ -63,7 +63,7 @@ def run_agent_loop(agent: AsyncAgent):
 
     while True:
         try:
-            user_input = input("You want to do: ").strip()
+            user_input = input("You want to do:\n").strip()
         except (EOFError, InterruptedError):
             break
         if not user_input:
