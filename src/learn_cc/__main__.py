@@ -58,6 +58,17 @@ def v0_bash(ctx: Context):
     run_agent_loop(agent)
 
 
+@cli.command("basic")
+def v1_basic_agent():
+    from .agents import BasicAgent
+
+    echo("basic agent with bash&fileOperation")
+    agent = BasicAgent(
+        cliOptions.model, cliOptions.system_prompt, debug=cliOptions.debug
+    )
+    run_agent_loop(agent)
+
+
 def run_agent_loop(agent: AsyncAgent):
     from asyncio import run
 

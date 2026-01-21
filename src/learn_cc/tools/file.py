@@ -66,3 +66,19 @@ def edit_file(path: str, old_text: str, new_text: str) -> str:
 
     except Exception as e:
         return f"Error: {e}"
+
+
+@tool
+def list_files(pattern: str, limit: int = 100) -> str:
+    """
+    list files by pattern.
+
+    Args:
+    pattern: file match glob pattern, example: "**/*.py"
+    limit: max files output
+    """
+    files = WORKDIR.glob(pattern=pattern)
+    l = [str(f) for f in files]
+    if len(l) > limit:
+        l = l[:limit]
+    return "\n".join(l)
