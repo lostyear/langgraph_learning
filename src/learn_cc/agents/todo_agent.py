@@ -4,7 +4,7 @@ from src.models import AgentInput
 from .base_agent import BaseAgent
 
 
-class BasicAgent(BaseAgent):
+class TodoAgent(BaseAgent):
     def __init__(
         self,
         model: str,
@@ -21,6 +21,7 @@ class BasicAgent(BaseAgent):
             write_file,
             edit_file,
             list_files,
+            new_todo_tool,
         )
 
         super().__init__(
@@ -33,6 +34,8 @@ class BasicAgent(BaseAgent):
                 write_file,
                 edit_file,
                 list_files,
+                # TODO: 这里按示例是有个超过N个轮次没用todo就要提示一下的，但是没想好怎么注入
+                new_todo_tool(),
             ],
             middleware=[
                 # 用户确认节点，用这个必须有checkpointer，不然用户确认完无法恢复

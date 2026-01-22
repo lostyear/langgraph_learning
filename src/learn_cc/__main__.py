@@ -74,6 +74,15 @@ def v1_basic_agent():
     run_agent_loop(agent.astream)
 
 
+@cli.command("todo")
+def v2_todo_agent():
+    from .agents import TodoAgent
+
+    echo("todo agent with todo list")
+    agent = TodoAgent(cliOptions.model, cliOptions.system_prompt)
+    run_agent_loop(agent.astream)
+
+
 def run_agent_loop(func):
     from asyncio import run
 

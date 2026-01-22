@@ -16,6 +16,6 @@ class BashAgent(BaseAgent):
         super().__init__(
             model=model,
             system_prompt=system_prompt,
-            thread_id="bash_agent",
+            thread_id=thread_id,
             tools=[run_bash],
         )
