@@ -9,7 +9,7 @@ class TodoAgent(BaseAgent):
         self,
         model: str,
         system_prompt: str,
-        thread_id: str = "basic_agent",
+        thread_id: str = "todo_agent",
     ):
         from langchain.agents.middleware import (
             HumanInTheLoopMiddleware,

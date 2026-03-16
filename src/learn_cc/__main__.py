@@ -83,6 +83,24 @@ def v2_todo_agent():
     run_agent_loop(agent.astream)
 
 
+@cli.command("langchain")
+def langchain_agent():
+    from .agents import OriginLangChainAgent
+
+    echo("origin lang chain agent")
+    agent = OriginLangChainAgent(cliOptions.model, cliOptions.system_prompt)
+    run_agent_loop(agent.astream)
+
+
+@cli.command("subagent")
+def v3_sub_agent():
+    from .agents import SubAgents
+
+    echo("run agent with sub agents")
+    agent = SubAgents(cliOptions.model, cliOptions.system_prompt)
+    run_agent_loop(agent.astream)
+
+
 def run_agent_loop(func):
     from asyncio import run
 
