@@ -13,6 +13,7 @@ class BaseAgent:
         system_prompt: str,
         thread_id: str,
         tools: List[BaseTool] = [],
+        save_history: bool = True,
         **kwargs,
     ):
         import logging
@@ -21,6 +22,9 @@ class BaseAgent:
         from langgraph.checkpoint.memory import InMemorySaver
         from langchain_core.runnables import RunnableConfig
 
+        check_pointer = None
+        if save_history:
+            check_pointer = InMemorySaver()
         # 配置 thread_id 可以标识相同的对话，找到对话历史
         self.cfg = RunnableConfig(configurable={"thread_id": thread_id})
         self.agent = create_agent(
@@ -31,7 +35,7 @@ class BaseAgent:
             tools=tools,
             system_prompt=system_prompt,
             # 记忆保存, 这个参数要跟别的配置搭配使用，比如thread_id
-            checkpointer=InMemorySaver(),
+            checkpointer=check_pointer,
             **kwargs,
         )
         self.logger = logging.getLogger(__name__)
@@ -53,11 +57,12 @@ class BaseAgent:
         # print(result)
         return result
 
-    async def astream(self, prompt: str):
+    async def astream(self, prompt: str) -> str:
         from typing import cast
         from langchain.messages import HumanMessage
 
         inputs = cast(None, AgentInput(messages=[HumanMessage(prompt)]))
+        final_message = ""
 
         while True:
             interrupts: List[Interrupt] = []
@@ -72,12 +77,20 @@ class BaseAgent:
                         message = update["messages"][-1]
                         self.logger.info(f"message type: {type(message)}")
                         message.pretty_print()
+                        if isinstance(message, str):
+                            final_message = message
+                        elif isinstance(message, AIMessage):
+                            final_message = (
+                                message.content
+                                if isinstance(message.content, str)
+                                else str(message.content)
+                            )
                     if step == "__interrupt__":
                         interrupts.extend(update)
 
             # 没中断，那说明结束了，直接返回
             if not interrupts:
-                return
+                return final_message
 
             # 收集用户的决策
             decisions = []
@@ -103,7 +116,7 @@ class BaseAgent:
                             d = input("Your Decision: \n").strip().lower()
                         except (InterruptedError, EOFError):
                             print("user interrupt, exit...")
-                            return
+                            return "user interrupt, exit..."
                         if (not d in choices) and ("edit" not in choices):
                             print(f"Invaild choice, please try again")
                             continue

@@ -10,7 +10,11 @@ subAgentType = Literal["explore", "plan", "edit"]
 
 class SubAgents(BaseAgent):
     from pathlib import Path
-    from langchain.agents.middleware import FilesystemFileSearchMiddleware
+    from langchain.agents.middleware import (
+        FilesystemFileSearchMiddleware,
+        HostExecutionPolicy,
+        ShellToolMiddleware,
+    )
     from deepagents.middleware import FilesystemMiddleware
 
     class subAgentConfig(NamedTuple):
@@ -27,7 +31,11 @@ class SubAgents(BaseAgent):
                 # 用这个可能会检索到大量文件撑爆上下文窗口，需要增加上下文压缩能力才可用
                 FilesystemFileSearchMiddleware(
                     root_path=str(workspace_root), max_file_size_mb=1
-                )
+                ),
+                ShellToolMiddleware(
+                    workspace_root=workspace_root,
+                    execution_policy=HostExecutionPolicy(),
+                ),
             ],  # 没有写权限
         ),
         # Code: 完全代理用于实现
@@ -43,7 +51,11 @@ class SubAgents(BaseAgent):
             Description="Planning agent for designing implementation strategies",
             SystemPrompt="You are a planning agent. Analyze the codebase and output a numbered implementation plan. Do NOT make changes.",
             Midwares=[
-                FilesystemFileSearchMiddleware(root_path=str(workspace_root))
+                FilesystemFileSearchMiddleware(root_path=str(workspace_root)),
+                ShellToolMiddleware(
+                    workspace_root=workspace_root,
+                    execution_policy=HostExecutionPolicy(),
+                ),
             ],  # 只读
         ),
     }
@@ -67,6 +79,9 @@ class SubAgents(BaseAgent):
                 thread_id=f"{thread_id}_{name}",
                 tools=[],
                 middleware=cfg.Midwares,
+                # subagent开启记忆会出现序列化异常导致无法完成agent任务
+                # TODO: 需要研究一下深层原因，但是没有记忆的话Agent上下文会比较干净，目前可以接
+                save_history=False,
             )
             for name, cfg in self.subAgentConfigMap.items()
         }
@@ -76,7 +91,7 @@ class SubAgents(BaseAgent):
             thread_id=thread_id,
             tools=[
                 StructuredTool.from_function(
-                    func=self.SubAgentTask,  # type: ignore
+                    coroutine=self.SubAgentTask,
                     name="subagent_task",
                     description=f"""
                         run SubAgent to do a task
@@ -96,11 +111,17 @@ class SubAgents(BaseAgent):
 
     # @tool(
     # )
-    def SubAgentTask(self, agent: subAgentType, desprction: str, prompt: str):
-        from asyncio import run
-
+    async def SubAgentTask(self, agent: subAgentType, desprction: str, prompt: str):
         currentAgent = self.subAgents.get(agent)
-        if currentAgent is None:
+        if not currentAgent:
             print(f"Can not find agent {agent}!!!")
             return
-        return run(currentAgent.astream(prompt=prompt))
+        print("=" * 40 + f"使用{agent}进行子任务" + "=" * 40)
+        print(f"{agent} 使用prompt: {prompt}")
+        print("=" * 60)
+
+        result = await currentAgent.astream(prompt=prompt)
+        print("=" * 40 + f"{agent} 返回结果：" + "=" * 40)
+        print(result)
+        print("=" * 60)
+        return result
