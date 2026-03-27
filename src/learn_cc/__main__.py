@@ -94,10 +94,19 @@ def langchain_agent():
 
 @cli.command("subagent")
 def v3_sub_agent():
-    from .agents import SubAgents
+    from .agents import SubAgent
 
     echo("run agent with sub agents")
-    agent = SubAgents(cliOptions.model, cliOptions.system_prompt)
+    agent = SubAgent(cliOptions.model, cliOptions.system_prompt)
+    run_agent_loop(agent.astream)
+
+
+@cli.command("skill")
+def v4_agent_skill():
+    from .agents import SkillAgent
+
+    echo("run agent with sub agents")
+    agent = SkillAgent(cliOptions.model, cliOptions.system_prompt)
     run_agent_loop(agent.astream)
 
 
